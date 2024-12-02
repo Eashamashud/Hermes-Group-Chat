@@ -1,0 +1,183 @@
+<!--
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 8px; margin: 4px 0; background: #f4f4f4; border-radius: 4px; }
+        #form { display: flex; margin-top: 10px; }
+        #form input { flex: 1; padding: 10px; }
+        #form button { padding: 10px; background: #007bff; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const messages = document.getElementById('messages');
+
+        // Submit message
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+
+        // Listen for incoming messages
+        socket.on('chat message', (msg) => {
+            const item = document.createElement('li');
+            item.textContent = msg;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+    </script>
+</body>
+</html>
+-->
+
+<!---->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #groups {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            height: 100px;
+            overflow-y: auto;
+        }
+        #chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        #message-input {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Group Chat</h1>
+    <div>
+        <input id="username" placeholder="Enter your username" />
+        <input id="room" placeholder="Enter group name" />
+        <button id="join">Join Group</button>
+    </div>
+    <h2>Available Groups</h2>
+    <div id="groups"></div>
+    <div id="chat"></div>
+    <div id="message-input">
+        <input id="message" type="text" placeholder="Type a message..." />
+        <button id="send">Send</button>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const usernameInput = document.getElementById('username');
+        const roomInput = document.getElementById('room');
+        const joinButton = document.getElementById('join');
+        const groupsDiv = document.getElementById('groups');
+        const chat = document.getElementById('chat');
+        const messageInput = document.getElementById('message');
+        const sendButton = document.getElementById('send');
+
+        let room = '';
+
+        // Join a group
+        joinButton.addEventListener('click', () => {
+            const username = usernameInput.value;
+            room = roomInput.value;
+
+            if (username && room) {
+                socket.emit('joinGroup', room);
+                chat.innerHTML = ''; // Clear chat messages when joining a new group
+                alert(`Joined group: ${room}`);
+            }
+        });
+
+        // Send a message
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            const username = usernameInput.value;
+
+            if (message && username && room) {
+                socket.emit('chat message', { room, message, username });
+                messageInput.value = '';
+            }
+        });
+
+        // Receive messages
+        socket.on('chat message', ({ username, message }) => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${username}: ${message}`;
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight; // Auto-scroll to the bottom
+        });
+
+        // Update the list of active groups
+        socket.on('updateGroups', (groups) => {
+            groupsDiv.innerHTML = ''; // Clear current list
+            groups.forEach((group) => {
+                const groupElement = document.createElement('div');
+                groupElement.textContent = group;
+                groupsDiv.appendChild(groupElement);
+            });
+        });
+
+        // Receive system messages (e.g., join confirmation)
+        socket.on('message', (msg) => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = msg;
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight; // Auto-scroll to the bottom
+        });
+    </script>
+</body>
+</html>
